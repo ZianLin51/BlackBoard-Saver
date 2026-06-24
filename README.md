@@ -1,21 +1,17 @@
 # Blackboard Saver
 
-Blackboard Saver is a Selenium-based downloader for Imperial College Blackboard.
-It signs in through a real browser session, scans your enrolled courses, and saves course files into a local folder structure that mirrors the Blackboard course layout.
-
-The parallel downloader is designed for large Blackboard accounts: multiple browser workers scan courses while multiple HTTP workers download matching files in the background.
+Blackboard Saver helps you download course materials from Imperial College Blackboard in bulk.
+It opens Blackboard in a Google browser, lets you choose what kinds of files you want, and saves everything into tidy course folders on your computer.
 
 ## Features
 
-- Browser-based Blackboard login with MFA support.
-- Course scanning for files, attachments, tables, folders, and common video links.
-- Parallel scanning and downloading for faster bulk exports.
-- Visual filter UI before scanning.
-- File type and maximum file size filters.
-- Review window for filtered-out files, including a link back to the Blackboard page where each item was found.
-- Automatic local folder organization by course and content folder.
-- Cookie reuse between runs via `cookies.txt`.
-- Command-line options for automation or headless-style runs.
+- Download course files from Blackboard without clicking through every page by hand.
+- Choose which file types to download before scanning starts.
+- Skip files above a maximum size you choose.
+- Review skipped files later and manually keep anything important.
+- View the original Blackboard page for any skipped file.
+- Keep downloaded files organized by course and folder.
+- Narrow the run to one course when you do not need everything.
 
 ## Requirements
 
@@ -39,7 +35,7 @@ requests==2.34.2
 
 ## Quick Start
 
-Run the fully parallel downloader:
+Run the downloader:
 
 ```bash
 python blackboard_fully_parallel.py
@@ -60,33 +56,19 @@ Downloaded files are saved to:
 ~/Downloads/Blackboard
 ```
 
-You can change the output folder when prompted, through environment variables, or with a local `key.py` file.
+You can change the output folder when prompted.
 
-## Configuration
+## Login
 
-The downloader reads configuration in this order:
+The normal UI flow does not require you to configure your Blackboard username or password in this project. On the first run, the downloader opens Blackboard in Chrome. Sign in normally, finish MFA if required, then click `Confirm and scan` in the small confirmation window.
 
-1. Environment variables.
-2. A local `key.py` file.
-3. Interactive prompts.
+After a successful login, future runs will usually be able to continue without asking you to sign in again.
 
-Supported environment variables:
+If login starts behaving strangely, remove the saved login file and run the script again for a fresh browser login.
 
-```bash
-BLACKBOARD_EMAIL="your.name@example.com"
-BLACKBOARD_PASSWORD="your-password"
-BLACKBOARD_ROOT_DIR="/path/to/download/folder"
-```
+The script may still ask for a download folder in the terminal. Press Enter to use the default path, or type another folder path.
 
-Optional `key.py` example:
-
-```python
-EMAIL = "your.name@example.com"
-PASSWORD = "your-password"
-ROOT_DIR = r"C:\Users\you\Downloads\Blackboard"
-```
-
-Do not commit `key.py`, cookies, or downloaded course material.
+Do not commit saved login files or downloaded course material.
 
 ## Contributing
 
@@ -124,7 +106,7 @@ Review files when their type or size cannot be detected:
 python blackboard_fully_parallel.py --exclude-unknown-types --exclude-unknown-size
 ```
 
-Tune parallelism:
+Adjust how much work the downloader does at once:
 
 ```bash
 python blackboard_fully_parallel.py --scan-workers 4 --download-workers 12
@@ -134,8 +116,8 @@ python blackboard_fully_parallel.py --scan-workers 4 --download-workers 12
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `--scan-workers` | `8` | Number of parallel Selenium browser scanners. |
-| `--download-workers` | `16` | Number of parallel HTTP download workers. |
+| `--scan-workers` | `8` | Number of course pages to scan at once. |
+| `--download-workers` | `16` | Number of files to download at once. |
 | `--course` | all courses | Only scan courses whose name contains this text. |
 | `--dry-run` | off | Print download tasks without writing files. |
 | `--show-scanners` | off | Show scanner browser windows instead of headless scanners. |
@@ -163,11 +145,10 @@ If a filename already exists, the downloader appends a counter such as `(1)` to 
 
 ## Notes and Limitations
 
-- This project is tailored to Imperial College Blackboard URLs and page structure. (may be adaptable to other Blackboard instances with selector and URL changes, not tested, try it if you really need to)
+- This project is made for Imperial College Blackboard. Other schools may work after code changes, but that is not tested.
 - Some Blackboard pages return HTML instead of direct file downloads. These are reported as `Needs browser/manual handling`.
-- Blackboard may change its DOM structure over time. If scanning misses a section, use `--show-scanners` and inspect the page being scanned.
-- The script stores reusable session cookies in `cookies.txt`. Delete that file if you need to force a fresh login.
-- Very large Blackboard accounts may take a while to scan because each discovered file is inspected for metadata before filtering.
+- Blackboard may change over time. If scanning misses a section, use `--show-scanners` to see what the browser is doing.
+- Very large Blackboard accounts may take a while to scan.
 
 ## Development
 
@@ -181,4 +162,4 @@ git diff --check
 The main implementation lives in:
 
 - `blackboard_fully_parallel.py`: UI, login, scanning, filtering, and downloading.
-- `config.py`: environment variable, `key.py`, and prompt-based configuration helpers.
+- `config.py`: download folder and fallback prompt helpers.
